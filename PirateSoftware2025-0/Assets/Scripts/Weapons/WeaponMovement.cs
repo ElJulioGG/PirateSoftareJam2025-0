@@ -5,12 +5,23 @@ using UnityEngine;
 public class WeaponMovement : MonoBehaviour
 {
     public float rotationSpeed = 100f; // Speed of rotation
+    public float rollSpeed = 50f; // Speed for rolling sideways
     public float rollMultiplier = 1.5f; // Multiplier to make rolling more dynamic
     private Rigidbody rb; // Optional Rigidbody for physics-based rolling
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>(); // Reference Rigidbody if physics is used
+        // Reference Rigidbody if physics is used
+        rb = GetComponent<Rigidbody>();
+
+        // Reset transform rotation to default (identity)
+        transform.rotation = Quaternion.identity;
+
+        // Reset Rigidbody's angular velocity if it exists
+        if (rb != null)
+        {
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 
     void Update()
@@ -49,6 +60,16 @@ public class WeaponMovement : MonoBehaviour
         else if ((Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.D)) || (Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.A)))
         {
             rotationDirection.z += rollMultiplier; // Roll right
+        }
+
+        // Add sideways rotation with E and Q keys
+        if (Input.GetKey(KeyCode.E))
+        {
+            rotationDirection.z += 1; // Roll clockwise
+        }
+        if (Input.GetKey(KeyCode.Q))
+        {
+            rotationDirection.z -= 1; // Roll counterclockwise
         }
 
         // Normalize rotation direction to ensure consistent speed (diagonal movement isn't faster)

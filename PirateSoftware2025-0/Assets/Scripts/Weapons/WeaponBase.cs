@@ -142,6 +142,7 @@ public class WeaponBase : MonoBehaviour
             {
                 FireWeapon(); // Fire the weapon
                 firstShotFired = true; // Mark the first shot as fired
+                weaponRigidbody.useGravity = true;
                 holdTimer = 0f; // Reset the hold timer
             }
 
@@ -157,6 +158,10 @@ public class WeaponBase : MonoBehaviour
         if (firstShotFired)
         {
             isActiveWeapon = true;
+        }
+        else
+        {
+            isActiveWeapon = false;
         }
         // Normal shooting logic once the first shot is fired or the level has started
         if (isActiveWeapon)
@@ -220,6 +225,11 @@ public class WeaponBase : MonoBehaviour
     // Will update as we advance
     private void FireWeapon()
     {
+        if (GameManager.instance.playerInBubble)
+        {
+            GameManager.instance.playerInBubble = false;
+            weaponRigidbody.useGravity = true;
+        }
         // Cancel all momentum before shooting
         if (weaponRigidbody != null)
         {

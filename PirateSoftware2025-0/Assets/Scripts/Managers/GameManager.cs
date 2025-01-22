@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
     //[SerializeField] public bool playerCanAction = true;
     //[SerializeField] public bool playerInvincibility = false;
     [SerializeField] public bool levelStarted = false;
+    [SerializeField] public bool playerInBubble = false;
 
 
     private void Awake()
