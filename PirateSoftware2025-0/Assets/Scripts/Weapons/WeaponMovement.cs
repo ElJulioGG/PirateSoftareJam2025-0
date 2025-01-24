@@ -21,13 +21,16 @@ public class WeaponMovement : MonoBehaviour
         if (rb != null)
         {
             rb.angularVelocity = Vector3.zero;
+            rb.maxAngularVelocity = 50; // Limit max angular velocity to prevent excessive spin
         }
     }
 
-    void Update()
+    private void FixedUpdate()
     {
+
         RotateWeapon();
     }
+
 
     void RotateWeapon()
     {
@@ -72,8 +75,8 @@ public class WeaponMovement : MonoBehaviour
             rotationDirection.z -= 1; // Roll counterclockwise
         }
 
-        // Normalize rotation direction to ensure consistent speed (diagonal movement isn't faster)
-        if (rotationDirection != Vector3.zero)
+        // Normalize rotation direction if not zero to ensure consistent speed
+        if (rotationDirection.sqrMagnitude > 0.0001f)
         {
             rotationDirection.Normalize(); // Normalize the vector
 
@@ -86,6 +89,11 @@ public class WeaponMovement : MonoBehaviour
                 Vector3 torque = new Vector3(rotationDirection.x, rotationDirection.y, rotationDirection.z);
                 rb.AddTorque(torque * rotationSpeed * Time.deltaTime, ForceMode.Acceleration);
             }
+        }
+        else if (rb != null)
+        {
+            // Stop the rotation when no keys are pressed
+            rb.angularVelocity = Vector3.zero;
         }
     }
 }

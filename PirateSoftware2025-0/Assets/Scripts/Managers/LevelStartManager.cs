@@ -2,9 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Cinemachine;
 
 public class LevelStartManager : MonoBehaviour
 {
+    //[SerializeField] CameraShake camShake;
+    //[SerializeField] CinemachineVirtualCamera vCam;
     [SerializeField] private GameObject player;
     [SerializeField] private Rigidbody playerRb;
     [SerializeField] private GameObject spawnPos;
@@ -24,6 +27,13 @@ public class LevelStartManager : MonoBehaviour
         {
             Debug.LogWarning("No GameObject with tag 'Player' found.");
         }
+
+
+        if (GameManager.instance.levelStarted == false)
+        {
+            player.transform.position = spawnPos.transform.position;
+            playerRb.useGravity = false;
+        }
     }
 
     // Update is called once per frame
@@ -31,15 +41,6 @@ public class LevelStartManager : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.instance.levelStarted == false)
-        {
-            player.transform.position = spawnPos.transform.position;
-            //playerRb.useGravity = false;
-        }
-        else
-        {
-            //playerRb.useGravity = true;
-        }
 
         // Restart the scene when the R key is pressed
         if (Input.GetKeyDown(KeyCode.R)) // Corrected method for checking key press
@@ -60,6 +61,16 @@ private void FixedUpdate()
         {
            // player.transform.position = transform.position;
 
+        }
+
+        if (GameManager.instance.levelStarted == false)
+        {
+            player.transform.position = spawnPos.transform.position;
+           
+        }
+        else
+        {
+            //playerRb.useGravity = true;
         }
     }
 }
