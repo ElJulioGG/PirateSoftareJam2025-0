@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public class WeaponBase : MonoBehaviour
 {
+    [SerializeField] private bool disableArrowOnShoot;
+    [SerializeField] private GameObject startArrow;
     // Know which is the active weapon
     [SerializeField] private GameObject ghostFireParticles;
     [SerializeField] private GameObject tempGhostParticles;
@@ -53,7 +55,7 @@ public class WeaponBase : MonoBehaviour
 
     // Add here the animations (later)
     private Animator animator;
-
+    public event System.Action OnShoot;
     // Loading
     public float reloadTime;
     public int magazineSize, bulletsLeft;
@@ -111,6 +113,7 @@ public class WeaponBase : MonoBehaviour
 
     private void Start()
     {
+        startArrow.SetActive(true);
         // isActiveWeapon = false;
         //playerCamera = GameObject.FindWithTag("Main").GetComponent<Camera>();
     }
@@ -118,145 +121,155 @@ public class WeaponBase : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!GameManager.instance.levelStarted && !firstShotFired)
+        if (GameManager.instance.playerCanInput)
         {
-            if (Input.GetKey(KeyCode.Mouse0))
+
+
+            if (!GameManager.instance.levelStarted && !firstShotFired)
             {
-                holdTimer += Time.deltaTime;
-                holdSlider.value = holdTimer / holdTime; // Update slider value
-
-                // Calculate the percentage of hold time completed
-                float holdPercentage = Mathf.Clamp01(holdTimer / holdTime);
-
-                // Adjust shake intensity based on percentage
-                float currentShakeIntensity = maxShake * holdPercentage;
-                camShake.setShakeCam(currentShakeIntensity, 999f);
-
-                // Adjust zoom based on percentage
-                if (vCam != null)
+                if (Input.GetKey(KeyCode.Mouse0))
                 {
-                    CinemachineFramingTransposer framer = vCam.GetCinemachineComponent<CinemachineFramingTransposer>();
-                    if (framer != null)
-                    {
-                        float currentZoom = maxZoom * holdPercentage;
-                        framer.m_TrackedObjectOffset.x = currentZoom; // Adjust zoom by changing the offset.x
-                    }
-                }
+                    holdTimer += Time.deltaTime;
+                    holdSlider.value = holdTimer / holdTime; // Update slider value
 
-                if (holdTimer >= holdTime)
-                {
-                    ghostFireParticles.SetActive(true);
-                    Debug.Log("Ready to shoot after holding for 3 seconds.");
-                }
-            }
+                    // Calculate the percentage of hold time completed
+                    float holdPercentage = Mathf.Clamp01(holdTimer / holdTime);
 
-            if (Input.GetKeyUp(KeyCode.Mouse0))
-            {
-                ghostFireParticles.SetActive(false);
-                if (holdTimer >= holdTime)
-                {
-                    // Stop camera shake if implemented
-                    if (camShake != null) camShake.stopShake();
+                    // Adjust shake intensity based on percentage
+                    float currentShakeIntensity = maxShake * holdPercentage;
+                    camShake.setShakeCam(currentShakeIntensity, 999f);
 
-                    // Reset zoom if the hold was not long enough
+                    // Adjust zoom based on percentage
                     if (vCam != null)
                     {
                         CinemachineFramingTransposer framer = vCam.GetCinemachineComponent<CinemachineFramingTransposer>();
                         if (framer != null)
                         {
-                            framer.m_TrackedObjectOffset.x = 0f; // Reset zoom to original position
+                            float currentZoom = maxZoom * holdPercentage;
+                            framer.m_TrackedObjectOffset.x = currentZoom; // Adjust zoom by changing the offset.x
                         }
                     }
-                    firstShotFired = true;
 
-                    // or another specific point on or near the weapon
-                    GameObject newParticle = Instantiate(tempGhostParticles, this.transform, worldPositionStays: false);
-                    newParticle.transform.SetParent(this.transform, false);
-                    newParticle.transform.position = ghostFireParticles.transform.position;
-                    Destroy(newParticle, 2f);
-                    FireWeapon();
-
-                    // Actions from both snippets
-                    weaponRigidbody.useGravity = true;
-                    GameManager.instance.levelStarted = true;
-                }
-                else
-                {
-                    // Stop camera shake if implemented
-                    if (camShake != null) camShake.stopShake();
-
-                    // Reset zoom if the hold was not long enough
-                    if (vCam != null)
+                    if (holdTimer >= holdTime)
                     {
-                        CinemachineFramingTransposer framer = vCam.GetCinemachineComponent<CinemachineFramingTransposer>();
-                        if (framer != null)
-                        {
-                            framer.m_TrackedObjectOffset.x = 0f; // Reset zoom to original position
-                        }
+                        ghostFireParticles.SetActive(true);
+                        Debug.Log("Ready to shoot after holding for 3 seconds.");
                     }
                 }
 
-                // Reset these regardless of whether the shot was fired
-                holdTimer = 0f;
-                holdSlider.value = 0f; // Reset slider
-            }
-
-            return; // Exit Update to prevent normal shooting logic
-        }
-        if (firstShotFired)
-        {
-            weaponRigidbody.useGravity = true;
-            isActiveWeapon = true;
-            firstShotFired = false;
-        }
-
-        // Normal shooting logic once the first shot is fired or the level has started
-        if (isActiveWeapon)
-        {
-            if (bulletsLeft == 0 && isShooting)
-            {
-                SoundManager.Instance.emptyMagazineSound1911.Play();
-            }
-
-            // SINGLE SHOT
-            if (Input.GetKeyDown(KeyCode.Mouse0))
-            {
-                if (bulletsLeft > 0)
+                if (Input.GetKeyUp(KeyCode.Mouse0))
                 {
+                    ghostFireParticles.SetActive(false);
+                    if (holdTimer >= holdTime)
+                    {
+                        // Stop camera shake if implemented
+                        if (camShake != null) camShake.stopShake();
+
+                        // Reset zoom if the hold was not long enough
+                        if (vCam != null)
+                        {
+                            CinemachineFramingTransposer framer = vCam.GetCinemachineComponent<CinemachineFramingTransposer>();
+                            if (framer != null)
+                            {
+                                framer.m_TrackedObjectOffset.x = 0f; // Reset zoom to original position
+                            }
+                        }
+                        firstShotFired = true;
+                        if (disableArrowOnShoot)
+                        {
+                            startArrow.SetActive(false);
+                        }
+                        holdSlider.gameObject.SetActive(false);
+
+                        // or another specific point on or near the weapon
+                        GameObject newParticle = Instantiate(tempGhostParticles, this.transform, worldPositionStays: false);
+                        newParticle.transform.SetParent(this.transform, false);
+                        newParticle.transform.position = ghostFireParticles.transform.position;
+                        Destroy(newParticle, 2f);
+                        FireWeapon();
+
+                        // Actions from both snippets
+                        weaponRigidbody.useGravity = true;
+                        GameManager.instance.levelStarted = true;
+                    }
+                    else
+                    {
+                        // Stop camera shake if implemented
+                        if (camShake != null) camShake.stopShake();
+
+                        // Reset zoom if the hold was not long enough
+                        if (vCam != null)
+                        {
+                            CinemachineFramingTransposer framer = vCam.GetCinemachineComponent<CinemachineFramingTransposer>();
+                            if (framer != null)
+                            {
+                                framer.m_TrackedObjectOffset.x = 0f; // Reset zoom to original position
+                            }
+                        }
+                    }
+
+                    // Reset these regardless of whether the shot was fired
+                    holdTimer = 0f;
+                    holdSlider.value = 0f; // Reset slider
+                }
+
+                return; // Exit Update to prevent normal shooting logic
+            }
+            if (firstShotFired)
+            {
+                weaponRigidbody.useGravity = true;
+                isActiveWeapon = true;
+                firstShotFired = false;
+            }
+
+            // Normal shooting logic once the first shot is fired or the level has started
+            if (isActiveWeapon)
+            {
+                if (bulletsLeft == 0 && isShooting)
+                {
+                    SoundManager.Instance.emptyMagazineSound1911.Play();
+                }
+
+                // SINGLE SHOT
+                if (Input.GetKeyDown(KeyCode.Mouse0))
+                {
+                    if (bulletsLeft > 0)
+                    {
+                        FireWeapon();
+                    }
+                }
+
+                if (currentShootingMode == ShootingMode.Auto)
+                {
+                    isShooting = Input.GetKey(KeyCode.Mouse0);
+                }
+                else if (currentShootingMode == ShootingMode.Single || currentShootingMode == ShootingMode.Burst)
+                {
+                    isShooting = Input.GetKeyDown(KeyCode.Mouse0);
+                }
+
+                if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !isReloading)
+                {
+                    Reload();
+                }
+
+                // Reload automatically when magazine is empty
+                if (readyToShoot && !isShooting && !isReloading && bulletsLeft <= 0)
+                {
+                    Reload();
+                }
+
+                // AUTO SHOT
+                if (readyToShoot && isShooting && bulletsLeft > 0)
+                {
+                    burstBulletsLeft = bulletsPerBurst;
                     FireWeapon();
                 }
-            }
 
-            if (currentShootingMode == ShootingMode.Auto)
-            {
-                isShooting = Input.GetKey(KeyCode.Mouse0);
-            }
-            else if (currentShootingMode == ShootingMode.Single || currentShootingMode == ShootingMode.Burst)
-            {
-                isShooting = Input.GetKeyDown(KeyCode.Mouse0);
-            }
-
-            if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !isReloading)
-            {
-                Reload();
-            }
-
-            // Reload automatically when magazine is empty
-            if (readyToShoot && !isShooting && !isReloading && bulletsLeft <= 0)
-            {
-                Reload();
-            }
-
-            // AUTO SHOT
-            if (readyToShoot && isShooting && bulletsLeft > 0)
-            {
-                burstBulletsLeft = bulletsPerBurst;
-                FireWeapon();
-            }
-
-            if (AmmoManager.Instance.ammoDisplay != null)
-            {
-                AmmoManager.Instance.ammoDisplay.text = $"{bulletsLeft / bulletsPerBurst}/{magazineSize / bulletsPerBurst}";
+                if (AmmoManager.Instance.ammoDisplay != null)
+                {
+                    AmmoManager.Instance.ammoDisplay.text = $"{bulletsLeft / bulletsPerBurst}/{magazineSize / bulletsPerBurst}";
+                }
             }
         }
     }
@@ -269,6 +282,7 @@ public class WeaponBase : MonoBehaviour
     // Will update as we advance
     private void FireWeapon()
     {
+
         trailRenderer.SetActive(false);
         shootEvent.Invoke();
 
@@ -334,6 +348,7 @@ public class WeaponBase : MonoBehaviour
             burstBulletsLeft--;
             Invoke("FireWeapon", shootingDelay);
         }
+        OnShoot?.Invoke();
     }
 
    

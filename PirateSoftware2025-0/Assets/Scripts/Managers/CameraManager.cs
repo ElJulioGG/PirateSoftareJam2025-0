@@ -6,7 +6,7 @@ public class CameraManager : MonoBehaviour
     [SerializeField] GameObject player;
     [SerializeField] private CinemachineVirtualCamera staticVirtualCam;
     [SerializeField] CinemachineVirtualCamera virtualCam;
-    [SerializeField] float cameraMode;
+    [SerializeField] public int cameraMode;
     private GameObject goal;
 
     void Start()

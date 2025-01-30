@@ -27,8 +27,11 @@ public class WeaponMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-
-        RotateWeapon();
+        if (GameManager.instance.playerCanInput)
+        {
+            RotateWeapon();
+        }
+        
     }
 
 
