@@ -59,7 +59,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - BEVEL_ON
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -94,17 +95,17 @@ Material:
     m_Ints: []
     m_Floats:
     - _Ambient: 0.5
-    - _Bevel: 0.5
-    - _BevelClamp: 0
-    - _BevelOffset: 0
-    - _BevelRoundness: 0
-    - _BevelWidth: 0
+    - _Bevel: 0.225
+    - _BevelClamp: 0.484
+    - _BevelOffset: 0.207
+    - _BevelRoundness: 0.195
+    - _BevelWidth: 0.045
     - _BumpFace: 0
     - _BumpOutline: 0
     - _ColorMask: 15
     - _CullMode: 0
     - _Diffuse: 0.5
-    - _FaceDilate: 0
+    - _FaceDilate: -0.519
     - _FaceUVSpeedX: 0
     - _FaceUVSpeedY: 0
     - _GlowInner: 0.05
@@ -112,7 +113,7 @@ Material:
     - _GlowOuter: 0.05
     - _GlowPower: 0.75
     - _GradientScale: 15
-    - _LightAngle: 3.1416
+    - _LightAngle: 3.87
     - _MaskSoftnessX: 0
     - _MaskSoftnessY: 0
     - _OutlineSoftness: 0
@@ -122,8 +123,8 @@ Material:
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
     - _ScaleRatioA: 0.93333334
-    - _ScaleRatioB: 0.7583333
-    - _ScaleRatioC: 0.7583333
+    - _ScaleRatioB: 1.2427332
+    - _ScaleRatioC: 1.2427332
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0
@@ -147,7 +148,7 @@ Material:
     m_Colors:
     - _ClipRect: {r: -32767, g: -32767, b: 32767, a: 32767}
     - _EnvMatrixRotation: {r: 0, g: 0, b: 0, a: 0}
-    - _FaceColor: {r: 85.445015, g: 85.445015, b: 85.445015, a: 1}
+    - _FaceColor: {r: 114.0758, g: 29.078146, b: 0, a: 1}
     - _GlowColor: {r: 0, g: 1, b: 0, a: 0.5}
     - _MaskCoord: {r: 0, g: 0, b: 32767, a: 32767}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
@@ -166,11 +167,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
-  m_Name: pixelart SDF
+  m_Name: pixelart SDF 1
   m_EditorClassIdentifier: 
-  hashCode: 367711550
+  hashCode: 1005918383
   material: {fileID: -3738695150468912755}
-  materialHashCode: 389278558
+  materialHashCode: -122726353
   m_Version: 1.1.0
   m_SourceFontFileGUID: f10904cdc6b9ed14c9af960cb93e46e0
   m_SourceFontFile_EditorRef: {fileID: 12800000, guid: f10904cdc6b9ed14c9af960cb93e46e0,
