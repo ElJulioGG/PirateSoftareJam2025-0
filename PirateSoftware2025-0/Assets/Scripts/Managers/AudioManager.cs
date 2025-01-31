@@ -6,8 +6,8 @@ using UnityEngine;
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager instance;
-    public Sounds[] musicSounds, sfxSounds, playerSounds, UISounds;
-    public AudioSource musicSource, sfxSource, playerSource, UISource;
+    public Sounds[] musicSounds, sfxSounds, playerSounds, UISounds, LoopSounds;
+    public AudioSource musicSource, sfxSource, playerSource, UISource, LoopSource;
 
     private void Awake()
     {
@@ -49,6 +49,19 @@ public class AudioManager : MonoBehaviour
         else
         {
             sfxSource.PlayOneShot(s.clip); //hay varios metodos para controlar audio
+            //ver la documentacion de unity
+        }
+    }
+    public void PlayLoop(string name)
+    {
+        Sounds s = Array.Find(LoopSounds, x => x.name == name);
+        if (s == null)
+        {
+            Debug.Log("sound not found");
+        }
+        else
+        {
+            LoopSource.PlayOneShot(s.clip); //hay varios metodos para controlar audio
             //ver la documentacion de unity
         }
     }

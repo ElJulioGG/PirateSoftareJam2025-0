@@ -7,11 +7,15 @@ public class GhostBubblePull : MonoBehaviour
 {
     public float maxForce = 10000f; // Maximum pulling force
     public float forceIncreaseRate = 10f; // Rate at which force increases every 0.1 seconds
-    public string playerTag = "Player"; // Tag assigned to the player object
+    public string playerTag = "Player";
+    public string ammoTag = "AmmoDisplay";
+    public string gunTag = "Gun";// Tag assigned to the player object
     public string playerTrailTag = "PlayerTrail"; // Tag for the player trail
     public float stopDistance = 0.2f; // Distance at which the player is considered "at the center"
 
     [SerializeField] private Transform player;
+    [SerializeField] private WeaponBase playerWeaponBase;
+    [SerializeField] private AmmoDisplay ammoDisplay;
     [SerializeField] private Rigidbody playerRb;
     private bool isPulling = false;
     private float currentForce = 0f; // The current force applied to the player
@@ -36,6 +40,25 @@ public class GhostBubblePull : MonoBehaviour
     {
         // Find the player by tag
         GameObject playerObject = GameObject.FindWithTag(playerTag);
+        GameObject weaponBaseObject = GameObject.FindWithTag(gunTag);
+        GameObject ammoDisplayObject = GameObject.FindWithTag(ammoTag);
+
+        if (weaponBaseObject != null)
+        {
+            playerWeaponBase = weaponBaseObject.GetComponent<WeaponBase>();
+        }
+        else
+        {
+            Debug.LogError($"No GameObject found with tag '{playerTag}'!");
+        }
+        if (ammoDisplayObject != null)
+        {
+            ammoDisplay = ammoDisplayObject.GetComponent<AmmoDisplay>();
+        }
+        else
+        {
+            Debug.LogError($"No GameObject found with tag '{playerTag}'!");
+        }
 
         if (playerObject != null)
         {
@@ -94,6 +117,10 @@ public class GhostBubblePull : MonoBehaviour
             }
             else
             {
+                AudioManager.instance.PlayerSteps("gunBubble");
+                playerWeaponBase.insideBubble = true;
+                playerWeaponBase.bulletsLeft = playerWeaponBase.bulletsLeft + 1;
+                ammoDisplay.HandleShoot();
                 camShake.shakeCam();
                 // Shrink the new object
                 if (shrinkObject != null)
@@ -120,6 +147,7 @@ public class GhostBubblePull : MonoBehaviour
     {
         if (other.CompareTag(playerTag))
         {
+            AudioManager.instance.PlayerSteps("playerSplash1");
             if (!isPulling)
             {
                 Vector3 originalScale = outerBubble.transform.localScale;

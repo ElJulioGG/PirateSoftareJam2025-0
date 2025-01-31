@@ -19,6 +19,15 @@ public class LevelStartManager : MonoBehaviour
 
     void Start()
     {
+        if(!AudioManager.instance.musicSource.isPlaying)
+        {
+            string randomTheme = Random.Range(0, 2) == 0 ? "theme1" : "theme2";
+            AudioManager.instance.PlayMusic(randomTheme);
+        }
+
+        AudioManager.instance.PlaySfx("sewer");
+        AudioManager.instance.PlaySfx("water");
+
         slider.SetActive(false);
         GameManager.instance.playerCanInput = false;
         GameManager.instance.levelStarted = false;
@@ -102,7 +111,7 @@ public class LevelStartManager : MonoBehaviour
         string animationName = "Transition" + randomAnimation + "_In";
         canvasAnimator.Play(animationName);
 
-        yield return new WaitForSeconds(introWaitTime+0.5f);
+        yield return new WaitForSeconds(introWaitTime+0.2f);
 
         RestartScene();
     }
@@ -116,6 +125,7 @@ public class LevelStartManager : MonoBehaviour
 
         yield return new WaitForSeconds(introWaitTime + 0.5f);
 
-        RestartScene();
+        //RestartScene();
+        NextScene();
     }
 }

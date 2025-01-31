@@ -1,68 +1,56 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; // For Slider and Image
-using TMPro; // For TextMeshProUGUI
-using DG.Tweening; // For DOTween animations
+using UnityEngine.UI;
+using TMPro;
+using DG.Tweening;
 
 public class FillSlider : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private Slider slider; // Reference to the Slider
-    [SerializeField] private Image fillImage; // Reference to the Image (fill bar)
-    [SerializeField] private TextMeshProUGUI valueText1; // First TextMeshPro text
-    [SerializeField] private TextMeshProUGUI valueText2; // Second TextMeshPro text
+    [SerializeField] private Slider slider;
+    [SerializeField] private Image fillImage;
+    [SerializeField] private TextMeshProUGUI valueText1;
+    [SerializeField] private TextMeshProUGUI valueText2;
 
     [Header("Color Settings")]
-    [SerializeField] private Color lowValueColor = Color.red; // Color for low slider values
-    [SerializeField] private Color highValueColor = Color.green; // Color for high slider values
+    [SerializeField] private Color lowValueColor = Color.red;
+    [SerializeField] private Color highValueColor = Color.green;
 
     [Header("Animation Settings")]
-    [SerializeField] private float shakeStrength = 10f; // Strength of the shake animation
-    [SerializeField] private float shakeDuration = 0.5f; // Duration of the shake animation
-    [SerializeField] private float scaleMultiplier = 1.5f; // Scale multiplier for the text
-    [SerializeField] private float scaleDuration = 0.3f; // Duration of the scale animation
-    [SerializeField] private float shakeThreshold = 0.5f; // Slider value threshold for continuous shaking
+    [SerializeField] private float shakeStrength = 10f;
+    [SerializeField] private float shakeDuration = 0.5f;
+    [SerializeField] private float scaleMultiplier = 1.5f;
+    [SerializeField] private float scaleDuration = 0.3f;
+    [SerializeField] private float shakeThreshold = 0.5f;
 
-    private Tween shakeTween1; // Tween for the first text's shake animation
-    private Tween shakeTween2; // Tween for the second text's shake animation
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource sfx1_press;  // Play on press
+    [SerializeField] private AudioSource sfx2_loop;   // Loop while holding
+    [SerializeField] private AudioSource sfx3_cancel; // Play on early release
+    [SerializeField] private AudioSource sfx4_complete; // Play when max is reached
 
-    private Vector3 originalText1Position; // Original position of the first text
-    private Vector3 originalText2Position; // Original position of the second text
-    private Vector3 originalText1Scale; // Original scale of the first text
-    private Vector3 originalText2Scale; // Original scale of the second text
+
+    [SerializeField] private bool playFirst = true;
+
+    private bool isHolding = false;
+    private bool reachedMax = false;
 
     private void Start()
     {
-        // Ensure the slider reference is set
         if (slider == null)
         {
             Debug.LogError("Slider reference is not set!");
             return;
         }
 
-        // Store the original positions and scales of the text objects
-        originalText1Position = valueText1.transform.localPosition;
-        originalText2Position = valueText2.transform.localPosition;
-        originalText1Scale = valueText1.transform.localScale;
-        originalText2Scale = valueText2.transform.localScale;
-
-        // Add a listener to the slider's value change event
         slider.onValueChanged.AddListener(OnSliderValueChanged);
-
-        // Initialize the UI with the slider's starting value
         OnSliderValueChanged(slider.value);
     }
 
     private void OnSliderValueChanged(float value)
     {
-        // Update the text to display the slider's value
-        string formattedValue = value.ToString("F1"); // Format to one decimal place
+        float normalizedValue = value / slider.maxValue;
 
-        // Change the fill color based on the slider's value
-        float normalizedValue = value / slider.maxValue; // Normalize the value between 0 and 1
-
-        // Only change the color if the value is above the minimum
         if (value > slider.minValue)
         {
             fillImage.color = Color.Lerp(lowValueColor, highValueColor, normalizedValue);
@@ -74,48 +62,62 @@ public class FillSlider : MonoBehaviour
             valueText2.color = Color.white;
         }
 
-        // Animate the text based on the slider's value
         AnimateText(value);
+
+        // Check if max value is reached
+        if (value >= slider.maxValue && !reachedMax)
+        {
+            reachedMax = true;
+            sfx2_loop.Stop(); // Stop hold loop
+            if (sfx4_complete) sfx4_complete.Play(); // Play max reached sound
+        }
+    }
+
+    private void Update()
+    {
+        // Detect press
+        if (Input.GetMouseButtonDown(0) && !isHolding)
+        {
+            isHolding = true;
+            reachedMax = false;
+
+            // Play first sound (press)
+            if (playFirst)
+            {
+                AudioManager.instance.PlayerSteps("playerCharge");
+                StartCoroutine(PlayLoopAfterDelay(AudioManager.instance.playerSource.clip.length));
+                playFirst = false;
+            }
+        }
+
+        // Detect release
+        if (isHolding && Input.GetMouseButtonUp(0))
+        {
+            playFirst = true;
+            isHolding = false;
+            sfx2_loop.Stop(); // Stop hold loop
+
+            if (slider.value < slider.maxValue) // Play cancel sound if not max
+            {
+                AudioManager.instance.PlayerSteps("gunCancel");
+            }
+        }
+    }
+
+    private IEnumerator PlayLoopAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (isHolding)
+        {
+            AudioManager.instance.PlayLoop("playerCharge2");
+        }
     }
 
     private void AnimateText(float value)
     {
-        // Calculate the intensity of the animation based on the slider's value
-        float normalizedValue = value / slider.maxValue; // Normalize the value between 0 and 1
-
-        // Scale both text objects
+        float normalizedValue = value / slider.maxValue;
         Vector3 targetScale = Vector3.one * (1 + (scaleMultiplier - 1) * normalizedValue);
         valueText1.transform.DOScale(targetScale, scaleDuration).SetEase(Ease.OutBack);
         valueText2.transform.DOScale(targetScale, scaleDuration).SetEase(Ease.OutBack);
-
-        // Handle continuous shaking if the value is above the threshold
-        if (normalizedValue >= shakeThreshold)
-        {
-            // Start continuous shaking if not already shaking
-            if (shakeTween1 == null || !shakeTween1.IsPlaying())
-            {
-                shakeTween1 = valueText1.transform.DOShakePosition(shakeDuration, shakeStrength * normalizedValue)
-                    .SetLoops(-1, LoopType.Restart); // Loop indefinitely
-                shakeTween2 = valueText2.transform.DOShakePosition(shakeDuration, shakeStrength * normalizedValue)
-                    .SetLoops(-1, LoopType.Restart); // Loop indefinitely
-            }
-        }
-        else
-        {
-            // Stop continuous shaking if the value is below the threshold
-            if (shakeTween1 != null && shakeTween1.IsPlaying())
-            {
-                shakeTween1.Kill(); // Stop the shake animation
-                shakeTween2.Kill(); // Stop the shake animation
-                shakeTween1 = null;
-                shakeTween2 = null;
-
-                // Reset the text positions and scales to their original state
-                valueText1.transform.localPosition = originalText1Position;
-                valueText2.transform.localPosition = originalText2Position;
-                valueText1.transform.localScale = originalText1Scale;
-                valueText2.transform.localScale = originalText2Scale;
-            }
-        }
     }
 }

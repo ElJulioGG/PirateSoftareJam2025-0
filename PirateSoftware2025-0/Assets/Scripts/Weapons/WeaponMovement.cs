@@ -4,24 +4,30 @@ using UnityEngine;
 
 public class WeaponMovement : MonoBehaviour
 {
-    public float rotationSpeed = 100f; // Speed of rotation
-    public float rollSpeed = 50f; // Speed for rolling sideways
-    public float rollMultiplier = 1.5f; // Multiplier to make rolling more dynamic
-    private Rigidbody rb; // Optional Rigidbody for physics-based rolling
+    [SerializeField] private WeaponBase Weapon;
+    public float rotationSpeed = 250f;
+    public float rollSpeed = 50f;
+    public float rollMultiplier = 1.5f;
+    private Rigidbody rb;
+
+    public AudioSource rotationSound; // Assign in Inspector
+
+    private bool isRotating = false; // Track rotation state
 
     void Start()
     {
-        // Reference Rigidbody if physics is used
+        GameObject weaponBaseObject = GameObject.FindWithTag("Gun");
+        if (weaponBaseObject != null)
+        {
+            Weapon = weaponBaseObject.GetComponent<WeaponBase>();
+        }
         rb = GetComponent<Rigidbody>();
-
-        // Reset transform rotation to default (identity)
         transform.rotation = Quaternion.identity;
 
-        // Reset Rigidbody's angular velocity if it exists
         if (rb != null)
         {
             rb.angularVelocity = Vector3.zero;
-            rb.maxAngularVelocity = 50; // Limit max angular velocity to prevent excessive spin
+            rb.maxAngularVelocity = 50;
         }
     }
 
@@ -31,72 +37,64 @@ public class WeaponMovement : MonoBehaviour
         {
             RotateWeapon();
         }
-        
     }
-
 
     void RotateWeapon()
     {
-        // Initialize rotation direction
         Vector3 rotationDirection = Vector3.zero;
 
-        // Check for WASD inputs and set rotation direction
-        if (Input.GetKey(KeyCode.W))
-        {
-            rotationDirection.x += 1; // Rotate forward
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            rotationDirection.x -= 1; // Rotate backward
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            rotationDirection.y -= 1; // Rotate left
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            rotationDirection.y += 1; // Rotate right
-        }
+        if (Input.GetKey(KeyCode.W)) rotationDirection.x += 1;
+        if (Input.GetKey(KeyCode.S)) rotationDirection.x -= 1;
+        if (Input.GetKey(KeyCode.A)) rotationDirection.y -= 1;
+        if (Input.GetKey(KeyCode.D)) rotationDirection.y += 1;
 
-        // Add roll effect when moving diagonally
         if ((Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.A)) || (Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.D)))
-        {
-            rotationDirection.z -= rollMultiplier; // Roll left
-        }
+            rotationDirection.z -= rollMultiplier;
         else if ((Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.D)) || (Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.A)))
-        {
-            rotationDirection.z += rollMultiplier; // Roll right
-        }
+            rotationDirection.z += rollMultiplier;
 
-        // Add sideways rotation with E and Q keys
-        if (Input.GetKey(KeyCode.E))
-        {
-            rotationDirection.z += 1; // Roll clockwise
-        }
-        if (Input.GetKey(KeyCode.Q))
-        {
-            rotationDirection.z -= 1; // Roll counterclockwise
-        }
+        if (Input.GetKey(KeyCode.E)) rotationDirection.z += 1;
+        if (Input.GetKey(KeyCode.Q)) rotationDirection.z -= 1;
 
-        // Normalize rotation direction if not zero to ensure consistent speed
         if (rotationDirection.sqrMagnitude > 0.0001f)
         {
-            rotationDirection.Normalize(); // Normalize the vector
+            rotationDirection.Normalize();
+            float finalRotationSpeed = Input.GetKey(KeyCode.LeftShift) ? rotationSpeed / 3f : rotationSpeed;
+            transform.Rotate(rotationDirection * finalRotationSpeed * Time.deltaTime, Space.Self);
 
-            // Apply rotation to the transform for visual rotation
-            transform.Rotate(rotationDirection * rotationSpeed * Time.deltaTime, Space.Self);
-
-            // Apply torque to the Rigidbody for physics-based rotation
             if (rb != null)
             {
                 Vector3 torque = new Vector3(rotationDirection.x, rotationDirection.y, rotationDirection.z);
-                rb.AddTorque(torque * rotationSpeed * Time.deltaTime, ForceMode.Acceleration);
+                rb.AddTorque(torque * finalRotationSpeed * Time.deltaTime, ForceMode.Acceleration);
+            }
+
+            // Play sound if not already playing
+            if (!isRotating)
+            {
+                isRotating = true;
+                if (rotationSound && !rotationSound.isPlaying)
+                {
+                    if (Weapon.insideBubble)
+                    {
+                        rotationSound.Play();
+                    }
+                    
+                }
             }
         }
-        else if (rb != null)
+        else
         {
-            // Stop the rotation when no keys are pressed
-            rb.angularVelocity = Vector3.zero;
+            if (rb != null) rb.angularVelocity = Vector3.zero;
+
+            // Stop sound when not rotating
+            if (isRotating)
+            {
+                isRotating = false;
+                if (rotationSound)
+                {
+                    rotationSound.Stop();
+                }
+            }
         }
     }
 }

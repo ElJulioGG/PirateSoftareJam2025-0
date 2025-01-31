@@ -70,7 +70,7 @@ public class AmmoDisplay : MonoBehaviour
         transform.rotation = Quaternion.Euler(eulerAngles);
     }
 
-    private void HandleShoot()
+    public void HandleShoot()
     {
         ammoText.gameObject.SetActive(true);
         ammoText2.gameObject.SetActive(true);

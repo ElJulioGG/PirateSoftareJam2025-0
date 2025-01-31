@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public class WeaponBase : MonoBehaviour
 {
+    [SerializeField] public bool insideBubble;
     [SerializeField] private bool disableArrowOnShoot;
     [SerializeField] private GameObject startArrow;
     // Know which is the active weapon
@@ -97,7 +98,7 @@ public class WeaponBase : MonoBehaviour
     {
         readyToShoot = true;
         burstBulletsLeft = bulletsPerBurst;
-        bulletsLeft = magazineSize;
+        bulletsLeft = magazineSize - 1;
         animator = GetComponent<Animator>();
 
         trailRendererComponent = trailRenderer.GetComponent<TrailRenderer>();
@@ -175,6 +176,7 @@ public class WeaponBase : MonoBehaviour
                             }
                         }
                         firstShotFired = true;
+                        insideBubble = false;
                         if (disableArrowOnShoot)
                         {
                             startArrow.SetActive(false);
@@ -282,7 +284,7 @@ public class WeaponBase : MonoBehaviour
     // Will update as we advance
     private void FireWeapon()
     {
-
+        AudioManager.instance.PlayerSteps("gunShot1");
         trailRenderer.SetActive(false);
         shootEvent.Invoke();
 
@@ -327,7 +329,20 @@ public class WeaponBase : MonoBehaviour
             else
             {
                 camShake.setShakeCam(shootShakeAmp, shootShakeTime);
-                appliedForce = transform.forward * recoilForce;
+                if (insideBubble)
+                {
+                    appliedForce = transform.forward * recoilForce * firstShotMult;
+                    GameObject newParticle = Instantiate(tempGhostParticles, this.transform, worldPositionStays: false);
+                    newParticle.transform.SetParent(this.transform, false);
+                    newParticle.transform.position = ghostFireParticles.transform.position;
+                    Destroy(newParticle, 2f);
+                    insideBubble = false;
+                }
+                else
+                {
+                    appliedForce = transform.forward * recoilForce;
+                }
+               
             }
             weaponRigidbody.AddForce(appliedForce, ForceMode.Impulse);
         }
